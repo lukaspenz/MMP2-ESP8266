@@ -31,8 +31,8 @@ void setup()
 
   // switching on the LEDs
   bool lightOn = false;
-  /*while(!lightOn)
-    {
+  while(!lightOn)
+  {
     if(WiFi.status() != WL_CONNECTED)
     {
       connectToWIFI();
@@ -44,17 +44,17 @@ void setup()
     }
     // wait for light on message from server
     String line = client.readStringUntil('\n');
-    Serial.print("out: " + line);
-    if(line == "on")
+    if(line.length()> 1)
     {
-      // Implement turning light on here
-      lightOn = true;
+        //Implement turning light on here
+        Serial.println("light on");
+        lightOn = true;
     }
     else
     {
       Serial.println("Wrong input was sent");
     }
-    }*/
+  }
   digitalWrite(D8, HIGH);
 
 }
