@@ -1,18 +1,17 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
+#include <NewPing.h>
+
+#define TRIGGER_PIN D1
+#define ECHO_PIN D2
+#define MAX_DISTANCE 280
 
 const uint16_t port = 8585;
 IPAddress server(192, 168, 2, 100);
 WiFiClient client;
 
-const int echoPin = D2;
-const int trigPin = D1;
-
-#define SOUND_VELOCITY 0.034
-
-long duration;
-int distanceCm;
+NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
 
 const int interactionId = 4;
 
@@ -22,8 +21,8 @@ void setup()
   Serial.begin(115200);
 
   pinMode(D8, OUTPUT);
-  pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
-  pinMode(echoPin, INPUT);
+
+  
 
   // set wifi settings
   WiFi.mode(WIFI_STA);
@@ -52,13 +51,14 @@ void setup()
         //Implement turning light on here
         Serial.println("light on");
         lightOn = true;
+        digitalWrite(D8, HIGH);
     }
     else
     {
       Serial.println("Wrong input was sent");
     }
   }
-  digitalWrite(D8, HIGH);
+  
 
 }
 
@@ -75,24 +75,8 @@ void loop()
   }
 
 
-  //get sensor data
-
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  // Sets the trigPin on HIGH state for 10 micro seconds
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-  
-  // Reads the echoPin, returns the sound wave travel time in microseconds
-  duration = pulseIn(echoPin, HIGH);
-  
-  // Calculate the distance
-  distanceCm = duration * SOUND_VELOCITY/2;
-  
-  // Prints the distance on the Serial Monitor
-  Serial.println(distanceCm);
-  sendSensorData(String(distanceCm));
+  unsigned int distance = sonar.ping_cm();
+  sendSensorData(String(distance));
 
   delay(100);
 }
