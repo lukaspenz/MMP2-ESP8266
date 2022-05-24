@@ -1,18 +1,20 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
-#include "TimerOne.h"
+#include <Ticker.h>
 
 const uint16_t port = 8585;
 IPAddress server(192, 168, 2, 100);
 WiFiClient client;
 
-
-const int analogPin = A1;
 const int digitalPin = D1;
 
-int interval, wheel, counter;
-unsigned long previousMicros, usInterval, calc;
+unsigned long start_time = 0;
+unsigned long end_time = 0;
+int steps = 0;
+float steps_old = 0;
+float temp = 0;
+float rps = 0;
 
 
 const int interactionId = 1;
@@ -23,24 +25,8 @@ void setup()
   Serial.begin(115200);
 
   pinMode(D8, OUTPUT);
-  pinMode(digitalPin, INPUT);
+  pinMode(digitalPin, INPUT_PULLUP);
 
-  counter = 0; // counter auf 0 setzen
-  interval = 5; // 5 Sekunden Intervall
-  wheel = 20; // Loecher in der Encoder-Scheibe
-
-  calc = 60 / interval; // Intervall auf 1 Minute hoch rechnen
-  usInterval = interval * 1000000; // Intervallzeit fuer den Timer in
-  // Mikrosekunden umrechnen
-  wheel = wheel * 2; // Anzahl der Loecher in der Encoder-Scheibe mit 2
-  // multiplizieren, da der Interrupt bei jeder
-  // Aenderung des Signals ausgefuehrt wird
-
-  Timer1.initialize(usInterval); // Timer initialisieren auf dem Intervall
-  attachInterrupt(digitalPinToInterrupt(pin), count, CHANGE);
-  // fuehrt count aus, wenn sich das Signal am Pin 2 aendert
-
-  Timer1.attachInterrupt(output); // fuehrt nach Intervall output aus
 
   // set wifi settings
   WiFi.mode(WIFI_STA);
@@ -67,6 +53,7 @@ void setup()
     if (line.length() > 1)
     {
       //Implement turning light on here
+      digitalWrite(D8, HIGH);
       Serial.println("light on");
       lightOn = true;
     }
@@ -75,16 +62,8 @@ void setup()
       Serial.println("Wrong input was sent");
     }
   }
-  digitalWrite(D8, HIGH);
-
 }
 
-void count() {
-  if (micros() - previousMicros >= 700) {
-    counter++;
-    previousMicros = micros();
-  }
-}
 
 void loop() {
   if (WiFi.status() != WL_CONNECTED)
@@ -97,20 +76,28 @@ void loop() {
     connectToServer();
   }
 
-  Timer1.detachInterrupt(); // Unterbricht Timer
-  Serial.print("Drehzahl pro Minute: ");
-  int speedData = ((counter) * calc) / wheel;
-  // Berechnung der Umdrehungen pro Minute
+  start_time = millis();
+  end_time = start_time + 100;
+  while (millis() < end_time)
+  {
+    if (digitalRead(digitalPin))
+    {
+      steps = steps + 1;
+      while (digitalRead(digitalPin));
+    }
+  }
+  temp = steps - steps_old;
+  steps_old = steps;
+  rps = (temp / 20);
 
-  sendSensorData(String(speedData));
-  counter = 0; // zuruecksetzen des Zaehlers
-  Timer1.attachInterrupt(output); // startet Timer erneut
+  sendSensorData(String(rps));
 }
 
 void sendSensorData(String dataToSend) {
   Serial.println(dataToSend);
   client.println(dataToSend);
 }
+
 
 void connectToWIFI()
 {

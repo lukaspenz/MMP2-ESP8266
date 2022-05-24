@@ -7,14 +7,14 @@ const uint16_t port = 8585;
 IPAddress server(192, 168, 2, 100);
 WiFiClient client;
 
-
-const int analogPin = A0;
 const int digitalPin = D1;
 
-int interval, wheel, counter;
-unsigned long previousMicros, usInterval, calc;
-
-Ticker ticker;
+unsigned long start_time = 0;
+unsigned long end_time = 0;
+int steps = 0;
+float steps_old = 0;
+float temp = 0;
+float rps = 0;
 
 
 const int interactionId = 6;
@@ -25,15 +25,7 @@ void setup()
   Serial.begin(115200);
 
   pinMode(D8, OUTPUT);
-  pinMode(digitalPin, INPUT);
-
-  counter = 0; // counter auf 0 setzen
-  interval = 1; // 5 Sekunden Intervall
-  wheel = 20; // Loecher in der Encoder-Scheibe
-
-  wheel = wheel * 2; // Anzahl der Loecher in der Encoder-Scheibe mit 2
-  // multiplizieren, da der Interrupt bei jeder
-  // Aenderung des Signals ausgefuehrt wird
+  pinMode(digitalPin, INPUT_PULLUP);
 
 
   // set wifi settings
@@ -61,6 +53,7 @@ void setup()
     if (line.length() > 1)
     {
       //Implement turning light on here
+      digitalWrite(D8, HIGH);
       Serial.println("light on");
       lightOn = true;
     }
@@ -69,17 +62,8 @@ void setup()
       Serial.println("Wrong input was sent");
     }
   }
-  digitalWrite(D8, HIGH);
-  
-  ticker.attach(5, outputFunc); // Timer initialisieren auf dem Intervall
 }
 
-void count() {
-  if (micros() - previousMicros >= 700) {
-    counter++;
-    previousMicros = micros();
-  }
-}
 
 void loop() {
   if (WiFi.status() != WL_CONNECTED)
@@ -91,6 +75,22 @@ void loop() {
   {
     connectToServer();
   }
+
+  start_time = millis();
+  end_time = start_time + 100;
+  while (millis() < end_time)
+  {
+    if (digitalRead(digitalPin))
+    {
+      steps = steps + 1;
+      while (digitalRead(digitalPin));
+    }
+  }
+  temp = steps - steps_old;
+  steps_old = steps;
+  rps = (temp / 20);
+
+  sendSensorData(String(rps));
 }
 
 void sendSensorData(String dataToSend) {
@@ -98,13 +98,6 @@ void sendSensorData(String dataToSend) {
   client.println(dataToSend);
 }
 
-void outputFunc() {
-    int speedData = ((counter) * calc) / wheel;
-    // Berechnung der Umdrehungen pro Minute
-
-    sendSensorData(String(speedData));
-    counter = 0; // zuruecksetzen des Zaehlers
-  }
 
 void connectToWIFI()
 {

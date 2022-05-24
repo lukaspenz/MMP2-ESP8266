@@ -7,8 +7,6 @@ IPAddress server(192, 168, 2, 100);
 WiFiClient client;
 
 const int piezoPin = A0;
-float piezoState = 0;
-float lastPiezoState = 0;
 
 const int interactionId = 0;
 
@@ -27,31 +25,31 @@ void setup()
 
   // switching on the LEDs
   bool lightOn = false;
-  while(!lightOn)
+  while (!lightOn)
   {
-    if(WiFi.status() != WL_CONNECTED)
+    if (WiFi.status() != WL_CONNECTED)
     {
       connectToWIFI();
     }
 
-    if(!client.connected())
+    if (!client.connected())
     {
       connectToServer();
     }
     // wait for light on message from server
     String line = client.readStringUntil('\n');
-    if(line.length()> 1)
+    if (line.length() > 1)
     {
-        //Implement turning light on here
-        Serial.println("light on");
-        lightOn = true;
+      //Implement turning light on here
+      digitalWrite(D8, HIGH);
+      Serial.println("light on");
+      lightOn = true;
     }
     else
     {
       Serial.println("Wrong input was sent");
     }
   }
-  digitalWrite(D8, HIGH);
 
 }
 
@@ -69,21 +67,14 @@ void loop()
 
 
   //get sensor data
+  float sensorData = analogRead(piezoPin);
+  if (sensorData < 5) {
+    sensorData = 0;
+  }
+  sendSensorData(String(sensorData));
 
-  checkButtonState();
 
   delay(100);
-}
-
-void checkButtonState() {
-  String data = "";
-  int piezoState = analogRead(piezoPin);
-  if (piezoState != lastPiezoState) {
-    if (piezoState > 5) {
-      sendSensorData(String(piezoState));
-    }
-  }
-  lastPiezoState = piezoState;
 }
 
 void sendSensorData(String dataToSend) {
