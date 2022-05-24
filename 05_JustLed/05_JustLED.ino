@@ -6,11 +6,7 @@ const uint16_t port = 8585;
 IPAddress server(192, 168, 2, 100);
 WiFiClient client;
 
-char buttons[2] = {D6, D5};
-int buttonStates[2] = {0, 0};
-int lastButtonStates[2] = {0, 0};
-
-const int interactionId = 2;
+const int interactionId = 5;
 
 
 void setup()
@@ -31,24 +27,24 @@ void setup()
 
   // switching on the LEDs
   bool lightOn = false;
-  while(!lightOn)
+  while (!lightOn)
   {
-    if(WiFi.status() != WL_CONNECTED)
+    if (WiFi.status() != WL_CONNECTED)
     {
       connectToWIFI();
     }
 
-    if(!client.connected())
+    if (!client.connected())
     {
       connectToServer();
     }
     // wait for light on message from server
     String line = client.readStringUntil('\n');
-    if(line.length()> 1)
+    if (line.length() > 1)
     {
-        //Implement turning light on here
-        Serial.println("light on");
-        lightOn = true;
+      //Implement turning light on here
+      Serial.println("light on");
+      lightOn = true;
     }
     else
     {
@@ -70,43 +66,8 @@ void loop()
   {
     connectToServer();
   }
-
-
-  //get sensor data
-
-  for (int i = 0; i < sizeof(buttons); i++) {
-    checkButtonState(i);
-  }
-
-  delay(100);
 }
 
-void checkButtonState(int i) {
-  String data = "";
-  int buttonState = digitalRead(buttons[i]);
-  if (buttonState != lastButtonStates[i]) {
-    if (buttonState = HIGH) {
-      switch (i) {
-        case 0:
-          data = "1";
-          break;
-        case 1:
-          data = "2";
-          break;
-          //sendSensorData(data += "1");
-      }
-      sendSensorData(data);
-    } else {
-      sendSensorData(data += "0");
-    }
-  }
-  lastButtonStates[i] = buttonState;
-}
-
-void sendSensorData(String dataToSend) {
-  Serial.println(dataToSend);
-  client.println(dataToSend);
-}
 
 void connectToWIFI()
 {

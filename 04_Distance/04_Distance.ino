@@ -14,7 +14,7 @@ const int trigPin = D1;
 long duration;
 int distanceCm;
 
-const int interactionId = 3;
+const int interactionId = 4;
 
 
 void setup()

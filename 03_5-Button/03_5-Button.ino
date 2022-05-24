@@ -10,7 +10,7 @@ char buttons[5] = {D1, D2, D3, D4, D5};
 int buttonStates[5] = {0, 0, 0, 0, 0};
 int lastButtonStates[5] = {0, 0, 0, 0, 0};
 
-const int interactionId = 1;
+const int interactionId = 3;
 
 
 void setup()
