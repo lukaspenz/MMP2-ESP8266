@@ -6,15 +6,11 @@ const uint16_t port = 8585;
 IPAddress server(192, 168, 2, 100);
 WiFiClient client;
 
-const int echoPin = D2;
-const int trigPin = D1;
+char buttons[2] = {D6, D5};
+int buttonStates[2] = {0, 0};
+int lastButtonStates[2] = {0, 0};
 
-#define SOUND_VELOCITY 0.034
-
-long duration;
-int distanceCm;
-
-const int interactionId = 3;
+const int interactionId = 2;
 
 
 void setup()
@@ -22,8 +18,9 @@ void setup()
   Serial.begin(115200);
 
   pinMode(D8, OUTPUT);
-  pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
-  pinMode(echoPin, INPUT);
+  for (int i = 0; i < sizeof(buttons); i++) {
+    pinMode(buttons[i], INPUT_PULLUP);
+  }
 
   // set wifi settings
   WiFi.mode(WIFI_STA);
@@ -77,24 +74,33 @@ void loop()
 
   //get sensor data
 
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  // Sets the trigPin on HIGH state for 10 micro seconds
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-  
-  // Reads the echoPin, returns the sound wave travel time in microseconds
-  duration = pulseIn(echoPin, HIGH);
-  
-  // Calculate the distance
-  distanceCm = duration * SOUND_VELOCITY/2;
-  
-  // Prints the distance on the Serial Monitor
-  Serial.println(distanceCm);
-  sendSensorData(String(distanceCm));
+  for (int i = 0; i < sizeof(buttons); i++) {
+    checkButtonState(i);
+  }
 
   delay(100);
+}
+
+void checkButtonState(int i) {
+  String data = "";
+  int buttonState = digitalRead(buttons[i]);
+  if (buttonState != lastButtonStates[i]) {
+    if (buttonState = HIGH) {
+      switch (i) {
+        case 0:
+          data = "1";
+          break;
+        case 1:
+          data = "2";
+          break;
+          //sendSensorData(data += "1");
+      }
+      sendSensorData(data);
+    } else {
+      sendSensorData(data += "0");
+    }
+  }
+  lastButtonStates[i] = buttonState;
 }
 
 void sendSensorData(String dataToSend) {

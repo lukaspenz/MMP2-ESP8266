@@ -6,24 +6,17 @@ const uint16_t port = 8585;
 IPAddress server(192, 168, 2, 100);
 WiFiClient client;
 
-const int echoPin = D2;
-const int trigPin = D1;
+const int piezoPin = A0;
+float piezoState = 0;
+float lastPiezoState = 0;
 
-#define SOUND_VELOCITY 0.034
-
-long duration;
-int distanceCm;
-
-const int interactionId = 3;
-
+const int interactionId = 0;
 
 void setup()
 {
   Serial.begin(115200);
 
   pinMode(D8, OUTPUT);
-  pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
-  pinMode(echoPin, INPUT);
 
   // set wifi settings
   WiFi.mode(WIFI_STA);
@@ -77,24 +70,20 @@ void loop()
 
   //get sensor data
 
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  // Sets the trigPin on HIGH state for 10 micro seconds
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-  
-  // Reads the echoPin, returns the sound wave travel time in microseconds
-  duration = pulseIn(echoPin, HIGH);
-  
-  // Calculate the distance
-  distanceCm = duration * SOUND_VELOCITY/2;
-  
-  // Prints the distance on the Serial Monitor
-  Serial.println(distanceCm);
-  sendSensorData(String(distanceCm));
+  checkButtonState();
 
   delay(100);
+}
+
+void checkButtonState() {
+  String data = "";
+  int piezoState = analogRead(piezoPin);
+  if (piezoState != lastPiezoState) {
+    if (piezoState > 5) {
+      sendSensorData(String(piezoState));
+    }
+  }
+  lastPiezoState = piezoState;
 }
 
 void sendSensorData(String dataToSend) {
