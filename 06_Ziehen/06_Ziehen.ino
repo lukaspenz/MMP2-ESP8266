@@ -1,16 +1,23 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
+#include <Ticker.h>
 
 const uint16_t port = 8585;
 IPAddress server(192, 168, 2, 100);
 WiFiClient client;
 
-char buttons[5] = {D1, D2, D3, D4, D5};
-int buttonStates[5] = {0, 0, 0, 0, 0};
-int lastButtonStates[5] = {0, 0, 0, 0, 0};
 
-const int interactionId = 1;
+const int analogPin = A0;
+const int digitalPin = D1;
+
+int interval, wheel, counter;
+unsigned long previousMicros, usInterval, calc;
+
+Ticker ticker;
+
+
+const int interactionId = 6;
 
 
 void setup()
@@ -18,10 +25,16 @@ void setup()
   Serial.begin(115200);
 
   pinMode(D8, OUTPUT);
+  pinMode(digitalPin, INPUT);
 
-  for (int i = 0; i < sizeof(buttons); i++) {
-    pinMode(buttons[i], INPUT_PULLUP);
-  }
+  counter = 0; // counter auf 0 setzen
+  interval = 1; // 5 Sekunden Intervall
+  wheel = 20; // Loecher in der Encoder-Scheibe
+
+  wheel = wheel * 2; // Anzahl der Loecher in der Encoder-Scheibe mit 2
+  // multiplizieren, da der Interrupt bei jeder
+  // Aenderung des Signals ausgefuehrt wird
+
 
   // set wifi settings
   WiFi.mode(WIFI_STA);
@@ -32,34 +45,43 @@ void setup()
 
   // switching on the LEDs
   bool lightOn = false;
-  while(!lightOn)
+  while (!lightOn)
   {
-    if(WiFi.status() != WL_CONNECTED)
+    if (WiFi.status() != WL_CONNECTED)
     {
       connectToWIFI();
     }
 
-    if(!client.connected())
+    if (!client.connected())
     {
       connectToServer();
     }
     // wait for light on message from server
     String line = client.readStringUntil('\n');
-    if(line.length()> 1)
+    if (line.length() > 1)
     {
-        digitalWrite(D8, HIGH);
-        Serial.println("light on");
-        lightOn = true;
+      //Implement turning light on here
+      Serial.println("light on");
+      lightOn = true;
     }
     else
     {
       Serial.println("Wrong input was sent");
     }
   }
+  digitalWrite(D8, HIGH);
+  
+  ticker.attach(5, outputFunc); // Timer initialisieren auf dem Intervall
 }
 
-void loop()
-{
+void count() {
+  if (micros() - previousMicros >= 700) {
+    counter++;
+    previousMicros = micros();
+  }
+}
+
+void loop() {
   if (WiFi.status() != WL_CONNECTED)
   {
     connectToWIFI();
@@ -69,52 +91,20 @@ void loop()
   {
     connectToServer();
   }
-
-
-  //get sensor data
-
-  for (int i = 0; i < sizeof(buttons); i++) {
-    checkButtonState(i);
-  }
-
-  delay(100);
-}
-
-void checkButtonState(int i) {
-  String data = "";
-  int buttonState = digitalRead(buttons[i]);
-  if (buttonState != lastButtonStates[i]) {
-    if (buttonState = HIGH) {
-      switch (i) {
-        case 0:
-          data = "1";
-          break;
-        case 1:
-          data = "2";
-          break;
-        case 2:
-          data = "3";
-          break;
-        case 3:
-          data = "4";
-          break;
-        case 4:
-          data = "5";
-          break;
-          //sendSensorData(data += "1");
-      }
-      sendSensorData(data);
-    } else {
-      sendSensorData(data += "0");
-    }
-  }
-  lastButtonStates[i] = buttonState;
 }
 
 void sendSensorData(String dataToSend) {
   Serial.println(dataToSend);
   client.println(dataToSend);
 }
+
+void outputFunc() {
+    int speedData = ((counter) * calc) / wheel;
+    // Berechnung der Umdrehungen pro Minute
+
+    sendSensorData(String(speedData));
+    counter = 0; // zuruecksetzen des Zaehlers
+  }
 
 void connectToWIFI()
 {
