@@ -48,10 +48,10 @@ void setup()
     String line = client.readStringUntil('\n');
     if(line.length()> 1)
     {
+        //Implement turning light on here
         digitalWrite(D8, HIGH);
         Serial.println("light on");
         lightOn = true;
-        digitalWrite(D8, HIGH);
     }
     else
     {
