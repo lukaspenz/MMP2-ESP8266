@@ -74,11 +74,11 @@ void loop()
   sendSensorData(String(sensorData));
 
 
-  delay(100);
+  //delay(100);
 }
 
 void sendSensorData(String dataToSend) {
-  Serial.println(dataToSend);
+  //Serial.println(dataToSend);
   client.println(dataToSend);
 }
 
