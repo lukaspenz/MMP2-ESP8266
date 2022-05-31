@@ -31,24 +31,24 @@ void setup()
 
   // switching on the LEDs
   bool lightOn = false;
-  while(!lightOn)
+  while (!lightOn)
   {
-    if(WiFi.status() != WL_CONNECTED)
+    if (WiFi.status() != WL_CONNECTED)
     {
       connectToWIFI();
     }
 
-    if(!client.connected())
+    if (!client.connected())
     {
       connectToServer();
     }
     // wait for light on message from server
     String line = client.readStringUntil('\n');
-    if(line.length()> 1)
+    if (line.length() > 1)
     {
-        digitalWrite(D8, HIGH);
-        Serial.println("light on");
-        lightOn = true;
+      digitalWrite(D8, HIGH);
+      Serial.println("light on");
+      lightOn = true;
     }
     else
     {
@@ -97,8 +97,11 @@ void checkButtonState(int i) {
     } else {
       sendSensorData(data += "0");
     }
+    lastButtonStates[i] = buttonState;
+  } else {
+    sendSensorData(data += "0");
   }
-  lastButtonStates[i] = buttonState;
+
 }
 
 void sendSensorData(String dataToSend) {

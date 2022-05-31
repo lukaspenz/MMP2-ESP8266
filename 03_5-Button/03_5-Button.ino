@@ -107,8 +107,11 @@ void checkButtonState(int i) {
     } else {
       sendSensorData(data += "0");
     }
+    lastButtonStates[i] = buttonState;
+  } else {
+    sendSensorData(data += "0");
   }
-  lastButtonStates[i] = buttonState;
+
 }
 
 void sendSensorData(String dataToSend) {
