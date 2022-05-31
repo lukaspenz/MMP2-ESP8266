@@ -70,15 +70,17 @@ void loop()
   float sensorData = analogRead(piezoPin);
   if (sensorData < 5) {
     sensorData = 0;
+  } else {
+    sendSensorData(String(sensorData));
   }
-  sendSensorData(String(sensorData));
+  
 
 
   //delay(100);
 }
 
 void sendSensorData(String dataToSend) {
-  //Serial.println(dataToSend);
+  Serial.println(dataToSend);
   client.println(dataToSend);
 }
 
